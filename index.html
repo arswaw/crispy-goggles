@@ -1,0 +1,151 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+	<meta charset="UTF-8" />
+	<title>Arswaw | First Game</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin-left: 30%;
+            margin-top: 10%;
+        }
+    </style>
+</head>
+<body>
+<h1>First Phaser Game</h1>
+<small>From <a href="http://phaser.io/tutorials/making-your-first-phaser-game" target="_blank">here.</a></small>
+<div id="canvasdiv"></div>
+<script type="text/javascript">
+// Init game
+var game = new Phaser.Game(800, 600, Phaser.AUTO, 'canvasdiv', { preload: preload, create: create, update: update });
+
+function preload() {
+  // Add basic images and Spritesheet
+  game.load.image('sky', 'assets/sky.png');
+  game.load.image('ground', 'assets/platform.png');
+  game.load.image('star', 'assets/star.png');
+  game.load.spritesheet('dude', 'assets/dude.png', 32, 48);
+}
+
+var platforms;
+
+var score = 0;
+var scoreText;
+
+function create() {
+  game.add.sprite(0, 0, 'star');
+
+  // Initialize Phaser's awesome physics system.
+  game.physics.startSystem(Phaser.Physics.ARCADE);
+  // Create background
+  game.add.sprite(0, 0, 'sky');
+  // Maybe I should add text with a variable.
+  var textVar = "Collect all the stars!";
+  var text = game.add.text(10,10,textVar, {fill:'white'})
+
+  // Define platform group.
+  platforms = game.add.group();
+  // Enable physics for the platform group.
+  platforms.enableBody = true;
+  // Initialize ground sprite
+  var ground = platforms.create(0, game.world.height - 64, 'ground');
+  // Scale to fit canvas
+  ground.scale.setTo(2, 2); 
+  // The ground will not move
+  ground.body.immovable = true;
+  // Make ledges
+  var ledge = platforms.create(400, 400, 'ground')
+
+  ledge.body.immovable = true;
+
+  ledge = platforms.create(-150, 250, 'ground');
+
+  ledge.body.immovable = true;
+
+  // Add the player
+  player = game.add.sprite(32, game.world.height - 150, 'dude')
+
+  // Player will receive physics.
+  game.physics.arcade.enable(player);
+
+  // Make the player bounce with the help of ARCADE.
+  player.body.bounce.y = 0.2;
+  player.body.gravity.y = 300;
+  player.body.collideWorldBounds = true;
+
+  // Left and right walking animations
+  player.animations.add('left', [0, 1, 2, 3], 10, true);
+  player.animations.add('right', [5, 6, 7, 8], 10, true);
+
+  // Create star variable and group.
+  stars = game.add.group();
+
+  stars.enableBody = true;
+
+  // Add 12 evenly spaced stars
+
+  // Define i as being 0, as long as there are less than 12 stars, keep creating them one by one.
+  for (var i = 0; i < 12; i++)
+  {
+  	// Create physical stars and add gravity and elasticity. All stars are in the 'stars' group.
+  	var star = stars.create(i * 70, 0, 'star');
+  	star.body.gravity.y = 100;
+  	star.body.bounce.y = 0.7 + Math.random() * 0.2;
+  }
+
+  scoreText = game.add.text(300, 16, 'score: 0', {fontSize: '32px', fill: '#000', boxShadow: '10px 20px 30px blue'});
+}
+function update() {
+  // Add collision between stars and dude. Since we added the platform group, they have collision physics as well.
+  game.physics.arcade.collide(player, platforms);
+
+  // Preliminary keyboard listeners and housekeeping from the API.
+  cursors = game.input.keyboard.createCursorKeys();
+
+  // The player's velocity is set to 0.
+  player.body.velocity.x = 0;
+
+  if (cursors.left.isDown)
+  { // Move along the x axis with a velocity of -150.
+	player.body.velocity.x = -150;
+
+  	player.animations.play('left');
+  }
+  else if (cursors.right.isDown)
+  {
+	player.body.velocity.x = 150;
+	// And play the associated frames for the "right" animation.
+	player.animations.play('right');
+
+  }
+  else {
+  	// Stand still
+  	player.animations.stop();
+
+  	player.frame = 4;
+  } // That's some verbose syntax.
+  if (cursors.up.isDown && player.body.touching.down)
+  {
+  	// Move along the y axis with a velocity of -350.
+  	player.body.velocity.y = - 350;
+  } 
+  // Neat way to make two groups collide with each other.
+  game.physics.arcade.collide(stars, platforms);
+
+  // We'll also want to add collision between the stars and the player.
+  game.physics.arcade.overlap(player, stars, collectStar, null, this);
+
+  // Define case for when the player "Collects" the star.
+  function collectStar(player, star) {
+  	star.kill();
+
+  	// Update score. (score = score + 10)
+  	score += 10;
+  	scoreText.text = 'Score: ' + score;
+  }
+
+}
+</script>
+
+</body>
+</html>
